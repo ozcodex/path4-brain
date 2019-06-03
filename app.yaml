@@ -1,0 +1,15 @@
+# [START runtime]
+runtime: nodejs 
+env: flex
+service: brain
+# [END runtime]
+
+# [START resources]
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+automatic_scaling:
+  max_num_instances: 1
+# [END resources]
