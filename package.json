@@ -2,9 +2,15 @@
   "name": "path4-brain",
   "version": "0.1.0",
   "dependencies": {
+    "axios": "^0.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "firebase": "^6.0.4"
+    "firebase": "^6.0.4",
+    "node-fetch": "^2.6.0",
+    "request": "^2.88.0",
+    "stream-to-blob": "^1.0.1",
+    "xhr2": "^0.2.0",
+    "xmlhttprequest": "^1.8.0"
   },
   "scripts": {
     "start": "node server.js"
