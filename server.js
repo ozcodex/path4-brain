@@ -71,6 +71,7 @@ function saveImgtoGcloud(){
 }
 
 function postData(url ='',data = {}){
+
   return fetch(url,{
     method:'POST',
     mode:'cors',
@@ -80,7 +81,7 @@ function postData(url ='',data = {}){
       'x-api-key': '881a0268-87fa-42a0-a83a-4f70d209636f',
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body:data,
-  }).then(res=>res.blob);
+    body:{"img": data},
+  }).then(res=>console.log(res)).catch(catcher);
 }
 
