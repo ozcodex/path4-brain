@@ -62,7 +62,7 @@ function saveImgtoGcloud(){
     // Like calling ref().put(blob)
     var aa = new Uint8Array(blob)
     const urlb2 = 'https://eyes-dot-project-path4.appspot.com/countpeople'
-    postData(urlb2,aa)
+    // postData(urlb2,{"img":aa})
     ref.put(aa).then(function(snapshot) {
       console.log('Uploaded a blob or file!');
     }).catch(catcher);
@@ -70,8 +70,7 @@ function saveImgtoGcloud(){
   
 }
 
-function postData(url ='',data = {}){
-
+function postData(url ='',data = ''){
   return fetch(url,{
     method:'POST',
     mode:'cors',
@@ -85,3 +84,16 @@ function postData(url ='',data = {}){
   }).then(res=>console.log(res)).catch(catcher);
 }
 
+
+
+var formData = new FormData();
+
+formData.append('username', 'abc123');
+
+fetch( 'https://eyes-dot-project-path4.appspot.com/countpeople', {
+  method: 'PUT',
+  body: formData
+})
+.then(response => response.json())
+.catch(error => console.error('Error:', error))
+.then(response => console.log('Success:', JSON.stringify(response)));
