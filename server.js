@@ -2,9 +2,11 @@ const express = require("express");
 const cors = require('cors');
 const fetch = require('node-fetch');
 const db = require('./db.js').db
+const firebase = require('firebase/app');
 const storage = require('./db.js').files
 const app = express();
 const port = 8084;
+
 
 app.use(cors());
 
@@ -48,7 +50,13 @@ function saveImgtoGcloud(){
   // Create a root reference
   var storageRef = storage.ref();
   var date = new Date(); 
-  var uid =  'img'+date.getTime() +'.jpeg'
+  var time = date.getTime();
+  var uid =  'img'+time +'.jpeg';
+  var ftime = firebase.firestore.Timestamp.fromDate(date);
+  
+
+  console.log(ftime);
+
 
   // Create a reference to the created uid(location of bucket in firestore)
   var ref = storageRef.child(uid);
@@ -60,18 +68,23 @@ function saveImgtoGcloud(){
     // Here's where you get access to the blob
     // And you can use it for whatever you want
     // Like calling ref().put(blob)
-
     var aa = new Uint8Array(blob)
+    // Create file metadata to update
+    var newMetadata = {
+      cacheControl: 'public',
+      contentType: 'image/jpeg'
+    }
     const urlb2 = 'https://eyes-dot-project-path4.appspot.com/countpeople'
-    postData( urlb2, aa).catch(catcher);
-    ref.put(aa).then(function(snapshot) {
+    postData( urlb2, aa,uid,ftime).catch(catcher);
+    ref.put(aa,newMetadata).then(function(snapshot) {
       console.log('Uploaded a blob or file!');
     }).catch(catcher);
   }).catch(catcher);
+
   
 }
 
-function postData(url,data){
+function postData(url,data,uid,ftime){
   return fetch(url,{
     method:'POST',
     mode:'cors',
@@ -79,10 +92,19 @@ function postData(url,data){
       'x-api-key': '881a0268-87fa-42a0-a83a-4f70d209636f',
     },
     body: data,
-  }).then(res=>res.json()).then(res=>console.log(JSON.stringify(res)));
+  }).then(res=>res.json()).then(res=>{console.log(JSON.stringify(res));inserData(res,uid,ftime)});
   
 }
 
+function inserData(data,uid,fftime){
+  console.log(fftime);
+  var docRef = db.collection('images').doc(uid);
+  var setAda = docRef.set({
+    counter:data["totalCount"],
+    filename:uid,
+    time:fftime
 
+  })
+}
 
 
