@@ -60,9 +60,10 @@ function saveImgtoGcloud(){
     // Here's where you get access to the blob
     // And you can use it for whatever you want
     // Like calling ref().put(blob)
+
     var aa = new Uint8Array(blob)
     const urlb2 = 'https://eyes-dot-project-path4.appspot.com/countpeople'
-    // postData(urlb2,{"img":aa})
+    postData( urlb2, aa).catch(catcher);
     ref.put(aa).then(function(snapshot) {
       console.log('Uploaded a blob or file!');
     }).catch(catcher);
@@ -70,30 +71,18 @@ function saveImgtoGcloud(){
   
 }
 
-function postData(url ='',data = ''){
+function postData(url,data){
   return fetch(url,{
     method:'POST',
     mode:'cors',
-    cache:'no-cache',
-    credendials:'same-origin',
     headers:{
       'x-api-key': '881a0268-87fa-42a0-a83a-4f70d209636f',
-      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body:{"img": data},
-  }).then(res=>console.log(res)).catch(catcher);
+    body: data,
+  }).then(res=>res.json()).then(res=>console.log(JSON.stringify(res)));
+  
 }
 
 
 
-var formData = new FormData();
 
-formData.append('username', 'abc123');
-
-fetch( 'https://eyes-dot-project-path4.appspot.com/countpeople', {
-  method: 'PUT',
-  body: formData
-})
-.then(response => response.json())
-.catch(error => console.error('Error:', error))
-.then(response => console.log('Success:', JSON.stringify(response)));
