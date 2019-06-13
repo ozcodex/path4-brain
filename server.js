@@ -3,7 +3,8 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const db = require('./db.js').db
 const firebase = require('firebase/app');
-const storage = require('./db.js').files
+const storage = require('./db.js').files;
+var md5 = require('md5');
 const app = express();
 const port = 8084;
 
@@ -27,22 +28,29 @@ app.get('/random', function (req, res) {
     });
 });
 
-// Promise error catch function
-const catcher = (e) => {
-  console.log('I have  this error in a Promise:',e)
-}
-
 app.listen(port, () => {
  console.log("The API is running on port " + port);
 });
 
 // setInterval(function(){ console.log("hi")},1000);
 
+// Global Variables
 var uploadedImagesDB = []
+var lastImageMd5Hash = 'dsadsad'
 // Every 20 secs fetch the new image
-
-setInterval(saveImgtoGcloud,20000);
+setInterval(saveImgtoGcloud, 5 * 1000); // sec * milli
+// Delete old images to save space on gCloud
 setInterval(deleteOldImages, 1 * 60 * 1000); // min * sec * milli
+
+// Promise error catch function
+const catcher = (e) => {
+  console.log('I have  this error in a Promise:',e);
+  reset();
+}
+
+function reset(){
+  lastImageMd5Hash = 'dasdasd';
+}
 
 function saveImgtoGcloud(){
 
@@ -67,6 +75,17 @@ function saveImgtoGcloud(){
     // And you can use it for whatever you want
     // Like calling ref().put(blob)
     var aa = new Uint8Array(blob)
+
+    // check if new image or not
+    var md5Hash = md5(aa);
+    if (lastImageMd5Hash == md5Hash) {
+      console.log("Same image, ignoring!")
+      return;
+    }
+
+    lastImageMd5Hash = md5Hash;
+    console.log("!!!!!!!New image, Updating!!!!!!")
+
     // Create file metadata to update
     var newMetadata = {
       cacheControl: 'public',
