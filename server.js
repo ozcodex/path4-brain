@@ -53,17 +53,12 @@ function saveImgtoGcloud(){
   var time = date.getTime();
   var uid =  'img'+time +'.jpeg';
   var ftime = firebase.firestore.Timestamp.fromDate(date);
-  
-
-  console.log(ftime);
-
 
   // Create a reference to the created uid(location of bucket in firestore)
   var ref = storageRef.child(uid);
   fetch(url)
   .then(res => res.arrayBuffer())
   // Gets the response and returns it as a arrayBuffer()
-
   .then(blob=> {
     // Here's where you get access to the blob
     // And you can use it for whatever you want
@@ -75,9 +70,9 @@ function saveImgtoGcloud(){
       contentType: 'image/jpeg'
     }
     const urlb2 = 'https://eyes-dot-project-path4.appspot.com/countpeople'
-    postData( urlb2, aa,uid,ftime).catch(catcher);
     ref.put(aa,newMetadata).then(function(snapshot) {
       console.log('Uploaded a blob or file!');
+      postData( urlb2, aa,uid,ftime).catch(catcher);
     }).catch(catcher);
   }).catch(catcher);
 
