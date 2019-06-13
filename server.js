@@ -7,7 +7,6 @@ const storage = require('./db.js').files
 const app = express();
 const port = 8084;
 
-
 app.use(cors());
 
 app.get('/hello', function (req, res) {
@@ -39,8 +38,11 @@ app.listen(port, () => {
 
 // setInterval(function(){ console.log("hi")},1000);
 
+var uploadedImagesDB = []
 // Every 20 secs fetch the new image
+
 setInterval(saveImgtoGcloud,20000);
+setInterval(deleteOldImages, 1 * 60 * 1000); // min * sec * milli
 
 function saveImgtoGcloud(){
 
@@ -54,10 +56,6 @@ function saveImgtoGcloud(){
   var uid =  'img'+time +'.jpeg';
   var ftime = firebase.firestore.Timestamp.fromDate(date);
   
-
-  console.log(ftime);
-
-
   // Create a reference to the created uid(location of bucket in firestore)
   var ref = storageRef.child(uid);
   fetch(url)
@@ -75,13 +73,18 @@ function saveImgtoGcloud(){
       contentType: 'image/jpeg'
     }
     const urlb2 = 'https://eyes-dot-project-path4.appspot.com/countpeople'
-    postData( urlb2, aa,uid,ftime).catch(catcher);
-    ref.put(aa,newMetadata).then(function(snapshot) {
-      console.log('Uploaded a blob or file!');
-    }).catch(catcher);
-  }).catch(catcher);
+    postData( urlb2, aa,uid,ftime).catch(catcher).then(function(res){
+      ref.put(aa,newMetadata).then(function(snapshot) {
+        console.log('Uploaded new image!');
+        inserData(res,uid,ftime);
 
-  
+        uploadedImagesDB.push({
+          name: uid,
+          uploadedAt: (new Date()).getTime()
+        });
+      }).catch(catcher);
+    });    
+  }).catch(catcher);
 }
 
 function postData(url,data,uid,ftime){
@@ -92,19 +95,37 @@ function postData(url,data,uid,ftime){
       'x-api-key': '881a0268-87fa-42a0-a83a-4f70d209636f',
     },
     body: data,
-  }).then(res=>res.json()).then(res=>{console.log(JSON.stringify(res));inserData(res,uid,ftime)});
-  
+  })
+  .then(res=>res.json())  
 }
 
 function inserData(data,uid,fftime){
-  console.log(fftime);
+  console.log('Inserting new update to DB!');
   var docRef = db.collection('images').doc(uid);
   var setAda = docRef.set({
     counter:data["totalCount"],
     filename:uid,
     time:fftime
-
   })
 }
 
+function deleteOldImages() {
+  console.log("Deleting old images. possible images to delete: " + uploadedImagesDB.length);
+
+  for (i=0; i < uploadedImagesDB.length; i++) {
+    var imgObj = uploadedImagesDB.shift();
+    if ((new Date()).getTime() - imgObj.uploadedAt > 2*60*1000) {
+      var storageRef = storage.ref();
+      var desertRef = storageRef.child(imgObj.name);
+      
+      desertRef.delete().then(function() {
+        // File deleted successfully
+        console.log("Deleted image: " + imgObj.name);
+      }).catch(catcher);
+    }
+    else {
+      uploadedImagesDB.push(imgObj);
+    }
+  }
+}
 
