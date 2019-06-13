@@ -3,10 +3,10 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const db = require('./db.js').db
 const firebase = require('firebase/app');
-const storage = require('./db.js').files
+const storage = require('./db.js').files;
+var md5 = require('md5');
 const app = express();
 const port = 8084;
-
 
 app.use(cors());
 
@@ -28,19 +28,29 @@ app.get('/random', function (req, res) {
     });
 });
 
-// Promise error catch function
-const catcher = (e) => {
-  console.log('I have  this error in a Promise:',e)
-}
-
 app.listen(port, () => {
  console.log("The API is running on port " + port);
 });
 
 // setInterval(function(){ console.log("hi")},1000);
 
+// Global Variables
+var uploadedImagesDB = []
+var lastImageMd5Hash = 'dsadsad'
 // Every 20 secs fetch the new image
-setInterval(saveImgtoGcloud,20000);
+setInterval(saveImgtoGcloud, 5 * 1000); // sec * milli
+// Delete old images to save space on gCloud
+setInterval(deleteOldImages, 1 * 60 * 1000); // min * sec * milli
+
+// Promise error catch function
+const catcher = (e) => {
+  console.log('I have  this error in a Promise:',e);
+  reset();
+}
+
+function reset(){
+  lastImageMd5Hash = 'dasdasd';
+}
 
 function saveImgtoGcloud(){
 
@@ -53,7 +63,11 @@ function saveImgtoGcloud(){
   var time = date.getTime();
   var uid =  'img'+time +'.jpeg';
   var ftime = firebase.firestore.Timestamp.fromDate(date);
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> 0f08e0c2341456ae270553bf3c3c0f28108577e6
   // Create a reference to the created uid(location of bucket in firestore)
   var ref = storageRef.child(uid);
   fetch(url)
@@ -64,19 +78,42 @@ function saveImgtoGcloud(){
     // And you can use it for whatever you want
     // Like calling ref().put(blob)
     var aa = new Uint8Array(blob)
+
+    // check if new image or not
+    var md5Hash = md5(aa);
+    if (lastImageMd5Hash == md5Hash) {
+      console.log("Same image, ignoring!")
+      return;
+    }
+
+    lastImageMd5Hash = md5Hash;
+    console.log("!!!!!!!New image, Updating!!!!!!")
+
     // Create file metadata to update
     var newMetadata = {
       cacheControl: 'public',
       contentType: 'image/jpeg'
     }
     const urlb2 = 'https://eyes-dot-project-path4.appspot.com/countpeople'
+<<<<<<< HEAD
     ref.put(aa,newMetadata).then(function(snapshot) {
       console.log('Uploaded a blob or file!');
       postData( urlb2, aa,uid,ftime).catch(catcher);
     }).catch(catcher);
-  }).catch(catcher);
+=======
+    postData( urlb2, aa,uid,ftime).catch(catcher).then(function(res){
+      ref.put(aa,newMetadata).then(function(snapshot) {
+        console.log('Uploaded new image!');
+        inserData(res,uid,ftime);
 
-  
+        uploadedImagesDB.push({
+          name: uid,
+          uploadedAt: (new Date()).getTime()
+        });
+      }).catch(catcher);
+    });    
+>>>>>>> 0f08e0c2341456ae270553bf3c3c0f28108577e6
+  }).catch(catcher);
 }
 
 function postData(url,data,uid,ftime){
@@ -87,19 +124,37 @@ function postData(url,data,uid,ftime){
       'x-api-key': '881a0268-87fa-42a0-a83a-4f70d209636f',
     },
     body: data,
-  }).then(res=>res.json()).then(res=>{console.log(JSON.stringify(res));inserData(res,uid,ftime)});
-  
+  })
+  .then(res=>res.json())  
 }
 
 function inserData(data,uid,fftime){
-  console.log(fftime);
+  console.log('Inserting new update to DB!');
   var docRef = db.collection('images').doc(uid);
   var setAda = docRef.set({
     counter:data["totalCount"],
     filename:uid,
     time:fftime
-
   })
 }
 
+function deleteOldImages() {
+  console.log("Deleting old images. possible images to delete: " + uploadedImagesDB.length);
+
+  for (i=0; i < uploadedImagesDB.length; i++) {
+    var imgObj = uploadedImagesDB.shift();
+    if ((new Date()).getTime() - imgObj.uploadedAt > 2*60*1000) {
+      var storageRef = storage.ref();
+      var desertRef = storageRef.child(imgObj.name);
+      
+      desertRef.delete().then(function() {
+        // File deleted successfully
+        console.log("Deleted image: " + imgObj.name);
+      }).catch(catcher);
+    }
+    else {
+      uploadedImagesDB.push(imgObj);
+    }
+  }
+}
 
