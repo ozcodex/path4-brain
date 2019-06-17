@@ -106,7 +106,7 @@ function saveImgtoGcloud(){
       cacheControl: 'public',
       contentType: 'image/jpeg'
     }
-    const urlb2 = 'https://eyes-dot-project-path4.appspot.com/rcnn/countpeople'
+    const urlb2 = 'http://35.246.214.192:8080/rcnn/countpeople'
     postData(urlb2, aa,uid,ftime).catch(catcher).then(function(res){
       ref.put(aa,newMetadata).then(function(snapshot) {
         console.log('Uploaded new image!');
