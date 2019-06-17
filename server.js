@@ -6,7 +6,7 @@ const firebase = require('firebase/app');
 const storage = require('./db.js').files;
 var md5 = require('md5');
 const app = express();
-const port = 8084;
+const port = 8080;
 
 app.use(cors());
 
@@ -27,6 +27,23 @@ app.get('/random', function (req, res) {
       console.log('Error getting collection messages in /random', err);
     });
 });
+
+app.get('/data', function (req, res) {
+  db.collection('images').orderBy('time','desc').limit(100).get()
+  .then(snapshot => {
+    let docs = snapshot.docs
+    var i = snapshot.size
+    var label = [];
+    var data = [];
+    for(i -= 1; i>0; i--){
+      let image = docs[i];
+      data.push(image.get('counter'))
+      label.push(image.get('time').toDate())
+    }
+    res.json({label:label,data:data})
+  }).catch(e => {console.log("error geting historical data: ",e)});
+});
+
 
 app.listen(port, () => {
  console.log("The API is running on port " + port);
