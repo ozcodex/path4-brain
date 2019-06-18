@@ -54,6 +54,7 @@ app.listen(port, () => {
 // Global Variables
 var uploadedImagesDB = []
 var lastImageMd5Hash = 'dsadsad'
+var sameImageCount = 5
 // Every 20 secs fetch the new image
 setInterval(saveImgtoGcloud, 5 * 1000); // sec * milli
 // Delete old images to save space on gCloud
@@ -67,6 +68,7 @@ const catcher = (e) => {
 
 function reset(){
   lastImageMd5Hash = 'dasdasd';
+  sameImageCount = 0;
 }
 
 function saveImgtoGcloud(){
@@ -95,7 +97,14 @@ function saveImgtoGcloud(){
     var md5Hash = md5(aa);
     if (lastImageMd5Hash == md5Hash) {
       console.log("Same image, ignoring!")
-      return;
+      sameImageCount += 1
+      if (sameImageCount >= 5) {
+        sameImageCount = 0;
+        console.log("!!!!!!!Same image count reached!!!!!!")
+      }
+      else {
+        return;
+      }
     }
 
     lastImageMd5Hash = md5Hash;
@@ -145,6 +154,10 @@ function inserData(data,uid,fftime){
 
 function deleteOldImages() {
   console.log("Deleting old images. possible images to delete: " + uploadedImagesDB.length);
+
+  if (uploadedImagesDB.length <= 2) {
+    return;
+  }
 
   for (i=0; i < uploadedImagesDB.length; i++) {
     var imgObj = uploadedImagesDB.shift();
